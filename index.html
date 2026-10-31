@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>充電車維修大富翁</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+/* Layout: a square board game (12 perimeter tiles, logo in the middle) beside a rules panel; stacks on phones */
+:root{
+  --page:#e6ece7; --fg:#18241c; --muted:#56655b; --panel:#ffffff; --panel-line:#cfd9d1;
+  --board:#cfe6d3; --tile:#eaf5ec; --ink:#14221a; --line:#1b2b20;
+  --blue:#2f74d0; --orange:#ec8420; --green:#1d9653; --purple:#8548bd; --red:#d6362a; --gold:#f2c230;
+  --display:"Bungee","Noto Sans TC",system-ui,sans-serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#0f1612;--fg:#dde8e0;--muted:#97a89c;--panel:#18221c;--panel-line:#2c3a31;color-scheme:dark}}
+:root[data-theme="dark"]{--page:#0f1612;--fg:#dde8e0;--muted:#97a89c;--panel:#18221c;--panel-line:#2c3a31;color-scheme:dark}
+
+body{background:var(--page);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6}
+.wrap{max-width:1120px;margin:0 auto;padding-block:24px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:24px;align-items:start}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr)}}
+
+/* ---------- board ---------- */
+.board-shell{container-type:inline-size;width:100%;max-width:660px;justify-self:center}
+.board{position:relative;aspect-ratio:1;max-width:100%;background:var(--board);border:3px solid var(--line);
+  display:grid;grid-template-columns:1.35fr 1fr 1fr 1.35fr;grid-template-rows:1.35fr 1fr 1fr 1.35fr;box-shadow:0 10px 30px rgba(20,34,26,.18)}
+.tile{position:relative;background:var(--tile);border:1.5px solid var(--line);color:var(--ink);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.2em;
+  padding:6px 4px;font-size:clamp(10px,2.3cqi,15px);line-height:1.25;font-family:inherit;min-width:0}
+.tile:hover,.tile:focus-visible{background:#fff;outline:none;z-index:2;box-shadow:inset 0 0 0 3px var(--gold)}
+.tile.active{background:#fffbe6;box-shadow:inset 0 0 0 3px var(--gold)}
+.band{position:absolute;background:var(--c)}
+.side-b .band{left:0;right:0;top:0;height:22%}
+.side-t .band{left:0;right:0;bottom:0;height:22%}
+.side-l .band{top:0;bottom:0;right:0;width:20%}
+.side-r .band{top:0;bottom:0;left:0;width:20%}
+.side-b{padding-top:calc(22% + 6px)} .side-t{padding-bottom:calc(22% + 6px)}
+.side-l{padding-right:calc(20% + 4px)} .side-r{padding-left:calc(20% + 4px)}
+.t-num{font-family:var(--display);font-size:.85em;color:var(--muted);letter-spacing:.04em}
+.t-name{font-weight:900;font-size:1.05em;text-wrap:balance}
+.t-sys{font-size:.78em;color:#4a5a50;border-top:1px dashed #9db3a3;padding-top:.15em;margin-top:.1em}
+.corner .t-name{font-size:1.2em}
+.corner .t-big{font-family:var(--display);font-size:2.1em;line-height:1;color:var(--red)}
+.go .t-big{font-size:2.6em}
+.corner .t-sub{font-size:.75em;color:#4a5a50}
+.jail{background:repeating-linear-gradient(90deg,#ffe3df 0 10px,#fff1ee 10px 20px)}
+.jail .t-days{font-family:var(--display);color:var(--red);font-size:1.25em;line-height:1}
+.jail .t-pct{font-size:.75em;font-weight:700;background:var(--red);color:#fff;padding:0 .4em;border-radius:3px}
+
+.center{grid-row:2/4;grid-column:2/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4%;padding:4%;overflow:hidden}
+.logo{transform:rotate(-12deg);background:var(--red);color:#fff;border:3px solid var(--line);padding:.35em .8em;text-align:center;box-shadow:4px 4px 0 var(--line)}
+.logo b{display:block;font-weight:900;font-size:clamp(14px,4.6cqi,30px);letter-spacing:.06em;line-height:1.2}
+.logo span{display:block;font-family:var(--display);font-size:clamp(8px,1.9cqi,12px);letter-spacing:.12em}
+.die{width:clamp(34px,9cqi,60px);aspect-ratio:1;background:#fff;border:2.5px solid var(--line);border-radius:18%;display:grid;place-items:center;
+  font-family:var(--display);font-size:clamp(16px,5cqi,32px);color:var(--ink);box-shadow:3px 3px 0 var(--line)}
+.die.rolling{animation:shake .5s}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-18deg)}50%{transform:rotate(14deg)}75%{transform:rotate(-8deg)}}
+.chance{background:var(--orange);color:#fff;border:2px solid var(--line);font-weight:900;font-size:clamp(10px,2.4cqi,14px);padding:.3em .9em;transform:rotate(8deg);cursor:pointer;font-family:inherit;box-shadow:3px 3px 0 var(--line)}
+.chance:focus-visible{outline:3px solid var(--gold)}
+
+.token{position:absolute;width:9%;aspect-ratio:1.3;pointer-events:none;transition:left .25s ease,top .25s ease;z-index:5;filter:drop-shadow(2px 3px 0 rgba(0,0,0,.35))}
+
+/* ---------- panel ---------- */
+.panel{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--panel-line);border-radius:10px;padding:16px}
+h1{font-size:22px;font-weight:900;margin:0;text-wrap:balance}
+.lede{color:var(--muted);margin:.3em 0 0;font-size:14px}
+.controls{display:flex;flex-wrap:wrap;gap:8px}
+.btn{font-family:inherit;font-weight:700;font-size:14px;border:2px solid var(--line);background:var(--gold);color:#14221a;padding:.45em 1em;cursor:pointer;box-shadow:3px 3px 0 var(--line);border-radius:4px}
+.btn.alt{background:var(--panel);color:var(--fg);border-color:var(--panel-line);box-shadow:none}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--line)}
+.btn:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.msg{min-height:1.6em;font-size:14px;font-weight:700;color:var(--red);margin-top:10px}
+
+.deed{padding:0;overflow:hidden}
+.deed-head{background:var(--c,#888);color:#fff;padding:12px 16px;border-bottom:2px solid var(--line)}
+.deed-head small{font-family:var(--display);letter-spacing:.08em;font-size:12px;opacity:.9}
+.deed-head h2{margin:0;font-size:20px;font-weight:900}
+.deed-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px}
+.goal{font-weight:700}
+.deed ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px;border-top:1px dashed var(--panel-line);padding-top:10px}
+.kv dt{color:var(--muted)} .kv dd{margin:0}
+.stat{display:flex;gap:16px;flex-wrap:wrap}
+.stat div{display:flex;flex-direction:column}
+.stat b{font-family:var(--display);font-size:24px;color:var(--red);line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+.tip{background:color-mix(in srgb,var(--gold) 22%,var(--panel));border-left:4px solid var(--gold);padding:8px 10px;font-size:14px}
+.deed a{color:var(--blue);font-weight:700}
+
+.chance-card{display:flex;flex-direction:column;gap:4px}
+.chance-card .q{font-weight:900}
+.chance-card .a{color:var(--fg)}
+.label{font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:700;margin:0 0 8px}
+
+.bar{display:flex;height:34px;border:2px solid var(--line);border-radius:4px;overflow:hidden;font-size:12px;font-weight:700;color:#fff}
+.bar div{display:flex;align-items:center;justify-content:center;white-space:nowrap;min-width:0}
+.legend{display:flex;flex-direction:column;gap:4px;font-size:13px;margin-top:10px}
+.legend span{display:inline-block;width:10px;height:10px;margin-right:6px;border-radius:2px;vertical-align:middle}
+.foot{font-size:12px;color:var(--muted);margin-top:8px}
+
+@media (prefers-reduced-motion: reduce){.token{transition:none}.die.rolling{animation:none}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <div class="board-shell">
+    <div class="board" id="board">
+      <div class="center">
+        <div class="logo"><b>充電車維修<br>大富翁</b><span>CART SERVICE</span></div>
+        <div class="die" id="die" aria-live="polite">1</div>
+        <button class="chance" id="chanceBtn" type="button">？機會</button>
+      </div>
+      <svg class="token" id="token" viewBox="0 0 52 40" aria-hidden="true">
+        <rect x="6" y="3" width="40" height="26" rx="3" fill="#d6362a" stroke="#14221a" stroke-width="2.5"/>
+        <rect x="11" y="8" width="13" height="16" fill="#fff" stroke="#14221a" stroke-width="1.5"/>
+        <rect x="28" y="8" width="13" height="16" fill="#fff" stroke="#14221a" stroke-width="1.5"/>
+        <circle cx="14" cy="34" r="5" fill="#14221a"/><circle cx="38" cy="34" r="5" fill="#14221a"/>
+      </svg>
+    </div>
+  </div>
+
+  <aside class="panel">
+    <div class="card">
+      <h1>充電車維修大富翁</h1>
+      <p class="lede">一件報修從進來到請款，繞棋盤一圈。點任一格看該步驟怎麼做，或擲骰子走一遍。</p>
+      <div class="controls" style="margin-top:12px">
+        <button class="btn" id="rollBtn" type="button">擲骰子</button>
+        <button class="btn alt" id="stepBtn" type="button">下一步</button>
+        <button class="btn alt" id="homeBtn" type="button">回起點</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div class="card deed" id="deed"></div>
+
+    <div class="card" id="chanceCard" hidden>
+      <p class="label">機會卡｜常見故障對照</p>
+      <div class="chance-card"><div class="q" id="cq"></div><div class="a" id="ca"></div></div>
+    </div>
+
+    <div class="card">
+      <p class="label">一件委外維修的時間花在哪</p>
+      <div class="bar">
+        <div style="width:39%;background:var(--green)">39%</div>
+        <div style="width:47%;background:var(--red)">47%</div>
+        <div style="width:14%;background:var(--purple)">14%</div>
+      </div>
+      <div class="legend">
+        <div><span style="background:var(--green)"></span>報修 → 完工：平均 11.1 天（中位數 4）</div>
+        <div><span style="background:var(--red)"></span>完工 → 送 BPM 請款：平均 13.5 天（中位數 10）</div>
+        <div><span style="background:var(--purple)"></span>送 BPM → 請款日期：平均 3.9 天（中位數 3）</div>
+      </div>
+      <p class="foot">日曆天，非工時。來源：2026 年經銷商派工單、報修表單、報帳分頁。</p>
+    </div>
+  </aside>
+</div>
+
+<script>
+const N = "https://app.notion.com/p/";
+const C = {blue:"var(--blue)",orange:"var(--orange)",green:"var(--green)",purple:"var(--purple)",red:"var(--red)",gold:"#b88a00"};
+const tiles = [
+  {kind:"go", big:"GO", name:"新報修進來", sub:"經過起點＝新的一週", color:C.gold, num:"START",
+   title:"起點：每週例行", goal:"每經過一次起點，就是新的一週，先把固定工作做完。",
+   steps:["每週一 8:00 下載「ToHSPT2026」CSV 上傳 HubSpot（先核對檔名日期與筆數）","寫週報：報修數字、各經銷商待派工、專案進度","比對標案 DOA 追蹤：交貨 LINE 群組＋內部 Teams 群組","月底：派工結案查核 → RMA 申請 → 金額結算 → BPM 費用申請"],
+   sys:"HubSpot、Notion 週報", done:"週報已寄出、HubSpot 已同步", url:N+"409a048f185e8148bed3ca32de19f521"},
+  {name:"報修受理", num:"01", color:C.blue, sys:"Google Form",
+   goal:"不管從哪個管道進來，當天變成一筆資料齊全的報修。",
+   steps:["Google Form 送出會自動進「表單」分頁","LINE、Email、電話進來的，由 FAE 代填，填表人員寫來源（LINE／EMAIL）","必填：學校、機型、序號、故障描述、窗口電話，加上照片或影片","漏電、冒煙、泡水：先請學校停用拔插頭，再立案"],
+   done:"「表單」分頁有這筆，進度 NEW", url:N+"409a048f185e81569d07e94fba8a4d21"},
+  {name:"立案建檔", num:"02", color:C.blue, sys:"HubSpot",
+   goal:"每筆報修都有 Case No、保固結果、HubSpot Ticket。",
+   steps:["Case No 自動流水號","序號貼到「查保固」分頁，保固註記貼在處理紀錄第一行","填案件類別（TRBL／DOA／RMA…）與處理指示","Apps Script 寄信給 HubSpot 自動開 Ticket，ID 回填 AI 欄","同校同類報修超過 3 次會變紅字，留意整批或環境問題"],
+   done:"有 Case No、保固、HubSpot ID", url:N+"409a048f185e81ed844afbc804b343d5"},
+  {kind:"corner", big:"⇄", name:"判斷分流", sub:"分岔路口", color:C.blue, num:"03",
+   title:"判斷與分流", goal:"先用最省的方式解決；需要到校時，一次帶對料。",
+   steps:["使用或設定問題 → LINE／電話指導後結案","北部 → FAE 自己到校","中南部、東部、離島 → 經銷商派工","交貨 6 個月內的新品不良 → DOA","現場修不好、箱體變形 → 整機 RMA 或交換箱體"],
+   tip:"抽一張「機會」卡，看常見故障對應要換的料。", sys:"維修手冊", done:"處理指示與案件類別已填", url:N+"409a048f185e81b29123ef02ea4c46c6"},
+  {name:"備料寄料", num:"04", color:C.orange, sys:"備品分頁",
+   goal:"經銷商到校前手上就有料，每個備品都追得到用在哪。",
+   steps:["先查該經銷商的備品分頁，有庫存就直接用","沒有 → 從土城充電車備品區取料","備品區也沒有 → 向 RMA 部申請零件","寄出後在備品分頁記品名、數量、寄送日期","用掉後「使用紀錄」填 RepairID","整車或箱體 → 寄「[貨運申請]」給物流"],
+   done:"經銷商確認收到料", url:N+"409a048f185e8152abf1c7b833fafa2f"},
+  {name:"派工", num:"05", color:C.orange, sys:"派工單",
+   goal:"每筆委外維修都有派工單，跟 Case No、HubSpot 對得上。",
+   steps:["觸發派工，依經銷商自動編號（YL／XD／OT／LK）","填委外派工、處理指示","RepairID 寫回報修表單「發包」欄","把「派工」欄訊息貼到經銷商 LINE，附維修手冊","離島、偏遠先談好船票、租車、住宿"],
+   done:"經銷商回覆約定前往日", url:N+"409a048f185e8141a875e7f4faf7a50f"},
+  {kind:"corner", big:"🔧", name:"現場維修", sub:"到校", color:C.green, num:"06",
+   title:"現場維修", goal:"一次修好，留下照片、紀錄、故障品三樣證據。",
+   steps:["拍序號標籤與故障狀態","依維修手冊換料，拆下的故障品貼 Case No","每一排、每一孔都插設備測過，關門上鎖、推行","拍修復後照片，請老師在 LINE 確認","新品組裝異常：照片＋斷裂零件都留著，轉 DOA"],
+   sys:"維修手冊、LINE", done:"派工單完工日期、維修紀錄已填", url:N+"409a048f185e811c852ad5ec078150ec"},
+  {name:"回收零件", num:"07", color:C.green, sys:"宅急便",
+   goal:"換下來的故障品都回到土城，並對得到 Case No。",
+   steps:["小件：請經銷商用宅急便到付寄回土城","包裹內附清單：RepairID、Case No、學校、品名","大件：寄「[貨運申請]」給物流安排回收","收到後貼 Case No，處理紀錄寫「故障品已回收」"],
+   done:"故障品在土城、已標 Case No", url:N+"409a048f185e818b8739dacac8e3aa8f"},
+  {name:"RMA／DOA", num:"08", color:C.green, sys:"RMA列印",
+   goal:"故障品都有 RMA 號；新品不良走 DOA 換全新機。",
+   steps:["案件複製到「RMA列印」分頁，產生 RMA 申請單","寄「[RMA申請]」給 RMA 部開單，故障品送交 RMA 部","回填 RMA No.（TW#####）","DOA：寄「[DOA申請]」給 SQA，RMA 走新品換貨，舊機與零件回廠分析"],
+   done:"RMA列印有 RMA No.", url:N+"409a048f185e81fe9d8ccfd7cfc404fe"},
+  {kind:"corner", big:"✔", name:"結案", sub:"四處狀態一致", color:C.purple, num:"09",
+   title:"結案", goal:"報修表單、派工單、HubSpot、週報四個地方狀態一致。",
+   steps:["老師確認恢復正常","經銷商回報、照片、報價單、發票收齊","表單進度改 CLOSED_ISSUE SOLVES","派工單填完工日、費用、發票號碼","週一 CSV 上傳時同步到 HubSpot"],
+   sys:"報修表單、HubSpot", done:"進度 CLOSED_ISSUE SOLVES", url:N+"409a048f185e8141a59cd54a12bd783e"},
+  {kind:"jail", name:"卡關", sub:"等補單結算", color:C.red, num:"⚠",
+   title:"卡關：等補單結算", goal:"修好之後到送出請款，是整圈最久的一段。",
+   stat:[["13.5 天","平均"],["10 天","中位數"],["47%","佔整圈時間"]],
+   steps:["經銷商先修好，派工單事後才補登","費用、發票號碼要等經銷商提供","再等月底一次結算才送 BPM"],
+   tip:"建議：完工當天就補派工單的費用與發票號碼；結算改成每兩週一次。", sys:"派工單", done:"派工單費用、發票號碼齊全", url:N+"409a048f185e81bfad77e3e6e854612c"},
+  {name:"費用請款", num:"10", color:C.purple, sys:"BPM ER",
+   goal:"每筆完工派工都在當月請款，每一元都對得回 Case 與發票。",
+   steps:["篩出已完工、未請款的派工單，依經銷商分組","BPM 費用申請單(ER)：申請目的貼「ER說明」，項目選 RMA 相關費用","寄「[採購申請]」通知主管與 RMA 部，附報價單與發票","ER 單號回填派工單與「報帳」分頁","個人外出費用：Airtable → 報帳分頁 → BPM ER"],
+   stat:[["3.9 天","送 BPM → 請款"]], done:"報帳分頁有 ER 單號與 SAP PR NO", url:N+"409a048f185e81cebc43f7b751ee854a"}
+];
+const pos=[[4,4],[4,3],[4,2],[4,1],[3,1],[2,1],[1,1],[1,2],[1,3],[1,4],[2,4],[3,4]];
+const side=i=> i<=3? "b" : i<=6? "l" : i<=9? "t" : "r";
+const chances=[
+  ["C30u+ 某一排無法充電","換 HUB 板。先排除 USB 線材短路。"],
+  ["整車不通電、面板不亮","PSU 或 ACBOX。"],
+  ["三排排插都沒電（X42i／C36i+／E36c+）","ACBOX。"],
+  ["C20i 延長線不通電","小變壓器或 ACBOX。"],
+  ["排插開關一直跳","換排插；也可能是過負載，請學校別接延長線。"],
+  ["門卡住、無法上鎖","門榫、鎖頭、門桿固定套或插銷。"],
+  ["輪子卡住、推動會偏","換車輪。煞車輪、方向輪、無踏板輪的輪子本體共用。"],
+  ["碰車體有觸電感","多半是教室沒有接地，請改插三孔接地插座，先做漏電檢測。"],
+  ["平板只充到 80%、圖示變灰","平板的電池保護設定，不是充電車故障，丟使用手冊給老師。"]
+];
+
+const board=document.getElementById("board"), token=document.getElementById("token"), deed=document.getElementById("deed"), msg=document.getElementById("msg"), die=document.getElementById("die");
+const els=[];
+tiles.forEach((t,i)=>{
+  const b=document.createElement("button");
+  b.type="button"; b.id="tile-"+i;
+  const corner = t.kind==="go"||t.kind==="corner";
+  b.className="tile "+(corner?"corner ":"side-"+side(i)+" ")+(t.kind==="go"?"go ":"")+(t.kind==="jail"?"jail side-"+side(i):"");
+  b.style.gridRow=pos[i][0]; b.style.gridColumn=pos[i][1]; b.style.setProperty("--c",t.color);
+  if(corner){
+    b.innerHTML=`<span class="t-num">${t.num}</span><span class="t-big">${t.big}</span><span class="t-name">${t.name}</span><span class="t-sub">${t.sub}</span>`;
+  }else if(t.kind==="jail"){
+    b.innerHTML=`<span class="band"></span><span class="t-name">${t.name}</span><span class="t-sub" style="font-size:.75em">${t.sub}</span><span class="t-days">13.5天</span><span class="t-pct">47%</span>`;
+  }else{
+    b.innerHTML=`<span class="band"></span><span class="t-num">${t.num}</span><span class="t-name">${t.name}</span><span class="t-sys">${t.sys}</span>`;
+  }
+  b.setAttribute("aria-label",(t.num? t.num+" ":"")+(t.title||t.name));
+  b.addEventListener("click",()=>{ if(!moving){ cur=i; place(); show(i);} });
+  board.insertBefore(b, token); els.push(b);
+});
+
+let cur=0, moving=false;
+function place(){
+  const el=els[cur], bw=board.clientWidth;
+  const w=bw*0.09, h=w/1.3;
+  token.style.left=(el.offsetLeft+el.offsetWidth/2-w/2)+"px";
+  token.style.top=(el.offsetTop+el.offsetHeight-h-6)+"px";
+  els.forEach((e,k)=>e.classList.toggle("active",k===cur));
+}
+function show(i){
+  const t=tiles[i];
+  deed.style.setProperty("--c",t.color);
+  const stat = t.stat? `<div class="stat">${t.stat.map(s=>`<div><b>${s[0]}</b><span>${s[1]}</span></div>`).join("")}</div>`:"";
+  deed.innerHTML=`<div class="deed-head"><small>${t.num}</small><h2>${t.title||t.name}</h2></div>
+  <div class="deed-body"><div class="goal">${t.goal}</div>${stat}
+  <ol>${t.steps.map(s=>`<li>${s}</li>`).join("")}</ol>
+  ${t.tip?`<div class="tip">${t.tip}</div>`:""}
+  <dl class="kv"><dt>主要系統</dt><dd>${t.sys}</dd><dt>完成條件</dt><dd>${t.done}</dd></dl>
+  <a href="${t.url}" target="_blank" rel="noopener">開啟 Notion 完整說明 →</a></div>`;
+}
+const sleep=ms=>new Promise(r=>setTimeout(r, matchMedia("(prefers-reduced-motion: reduce)").matches?0:ms));
+async function move(n){
+  if(moving) return; moving=true; msg.textContent="";
+  let passed=false;
+  for(let k=0;k<n;k++){ cur=(cur+1)%tiles.length; if(cur===0) passed=true; place(); await sleep(260); }
+  show(cur);
+  if(tiles[cur].kind==="jail") msg.textContent="卡關！這一格平均要等 13.5 天。";
+  else if(passed) msg.textContent="經過起點：新的一週，先做每週例行。";
+  moving=false;
+}
+document.getElementById("rollBtn").addEventListener("click",async()=>{
+  if(moving) return;
+  const n=1+Math.floor(Math.random()*6);
+  die.classList.remove("rolling"); void die.offsetWidth; die.classList.add("rolling");
+  die.textContent=n; await sleep(400); move(n);
+});
+document.getElementById("stepBtn").addEventListener("click",()=>{ die.textContent="1"; move(1); });
+document.getElementById("homeBtn").addEventListener("click",()=>{ if(moving) return; cur=0; place(); show(0); msg.textContent=""; });
+let ci=-1;
+document.getElementById("chanceBtn").addEventListener("click",()=>{
+  let n; do{ n=Math.floor(Math.random()*chances.length);}while(n===ci && chances.length>1); ci=n;
+  document.getElementById("cq").textContent="症狀："+chances[n][0];
+  document.getElementById("ca").textContent="通常要換："+chances[n][1];
+  document.getElementById("chanceCard").hidden=false;
+});
+addEventListener("resize",place);
+if(document.fonts) document.fonts.ready.then(place);
+place(); show(0);
+</script>
+
+</body>
+</html>
